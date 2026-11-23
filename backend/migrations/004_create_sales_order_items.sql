@@ -1,4 +1,4 @@
-
+-- +goose Up
 CREATE TABLE sales_order_items (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL REFERENCES sales_orders(id) ON DELETE CASCADE,
@@ -10,5 +10,5 @@ CREATE TABLE sales_order_items (
 CREATE INDEX idx_sales_order_items_order_id ON sales_order_items(order_id);
 CREATE INDEX idx_sales_order_items_sku ON sales_order_items(sku);
 
-
+-- +goose Down
 DROP TABLE sales_order_items;
