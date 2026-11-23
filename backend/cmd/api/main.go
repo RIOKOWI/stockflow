@@ -12,6 +12,9 @@ import (
 
 	"github.com/RIOKOWI/stockflow/internal/config"
 	"github.com/RIOKOWI/stockflow/internal/database"
+	"github.com/RIOKOWI/stockflow/internal/handler"
+	"github.com/RIOKOWI/stockflow/internal/repository"
+	"github.com/RIOKOWI/stockflow/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
@@ -57,6 +60,11 @@ func run(logger *slog.Logger) error {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "database": "ok"})
 	})
+
+	productRepo := repository.NewProductRepository(pool)
+	productSvc := service.NewProductService(productRepo)
+	productHandler := handler.NewProductHandler(productSvc)
+	productHandler.RegisterRoutes(router)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.AppPort,
