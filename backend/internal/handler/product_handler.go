@@ -26,9 +26,10 @@ func (h *ProductHandler) RegisterRoutes(r chi.Router) {
 		r.Get("/{id}", h.Get)
 		r.Put("/{id}", h.Update)
 		r.Delete("/{id}", h.Delete)
+		r.Post("/{id}/stock", h.AdjustStock)
+		r.Get("/{id}/movements", h.ListMovements)
 	})
 }
-
 
 func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
@@ -112,7 +113,6 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req model.CreateProductRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -133,7 +133,6 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 func (h *ProductHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(w, r)
 	if !ok {
@@ -152,7 +151,6 @@ func (h *ProductHandler) Get(w http.ResponseWriter, r *http.Request) {
 		"data":    product,
 	})
 }
-
 
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(w, r)
@@ -179,7 +177,6 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(w, r)
 	if !ok {
@@ -194,6 +191,49 @@ func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *ProductHandler) AdjustStock(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(w, r)
+	if !ok {
+		return
+	}
+
+	var req model.StockAdjustmentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, &service.Error{Code: service.CodeValidation, Message: "invalid JSON body"})
+		return
+	}
+
+	result, err := h.svc.AdjustStock(r.Context(), id, req)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"message": "Stock updated successfully",
+		"data":    result,
+	})
+}
+
+func (h *ProductHandler) ListMovements(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(w, r)
+	if !ok {
+		return
+	}
+
+	movements, err := h.svc.ListMovements(r.Context(), id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"message": "Stock movements retrieved successfully",
+		"data":    movements,
+	})
+}
 
 func parseID(w http.ResponseWriter, r *http.Request) (int, bool) {
 	raw := chi.URLParam(r, "id")
