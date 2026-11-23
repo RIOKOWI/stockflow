@@ -21,7 +21,18 @@ type SalesOrderItem struct {
 	ID        int    `json:"id"`
 	OrderID   int    `json:"order_id"`
 	SKU       string `json:"sku"`
+	Name      string `json:"name"`
 	Qty       int    `json:"qty"`
 	UnitPrice int    `json:"unit_price"`
 	Subtotal  int    `json:"subtotal"`
+}
+
+type CreateOrderRequest struct {
+	Customer string           `json:"customer"`
+	Items    []OrderItemInput `json:"items"`
+}
+
+type OrderItemInput struct {
+	SKU string `json:"sku"`
+	Qty int    `json:"qty"`
 }
