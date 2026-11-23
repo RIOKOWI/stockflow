@@ -20,11 +20,15 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 func writeError(w http.ResponseWriter, err error) {
 	var serviceErr *service.Error
 	if errors.As(err, &serviceErr) {
+		errBody := map[string]any{
+			"code":    serviceErr.Code,
+			"message": serviceErr.Message,
+		}
+		for k, v := range serviceErr.Fields {
+			errBody[k] = v
+		}
 		writeJSON(w, statusForCode(serviceErr.Code), map[string]any{
-			"error": map[string]any{
-				"code":    serviceErr.Code,
-				"message": serviceErr.Message,
-			},
+			"error": errBody,
 		})
 		return
 	}
@@ -44,7 +48,7 @@ func statusForCode(code string) int {
 		return http.StatusBadRequest
 	case service.CodeProductNotFound:
 		return http.StatusNotFound
-	case service.CodeProductExists, service.CodeProductHasHistory:
+	case service.CodeProductExists, service.CodeProductHasHistory, service.CodeInsufficientStock:
 		return http.StatusConflict
 	case service.CodeInternal:
 		return http.StatusInternalServerError
