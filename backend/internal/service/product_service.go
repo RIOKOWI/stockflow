@@ -15,12 +15,14 @@ const (
 	CodeProductNotFound   = "PRODUCT_NOT_FOUND"
 	CodeProductExists     = "PRODUCT_ALREADY_EXISTS"
 	CodeProductHasHistory = "PRODUCT_HAS_HISTORY"
+	CodeInsufficientStock = "INSUFFICIENT_STOCK"
 	CodeInternal          = "INTERNAL_SERVER_ERROR"
 )
 
 type Error struct {
 	Code    string
 	Message string
+	Fields  map[string]any
 }
 
 func (e *Error) Error() string {
@@ -136,8 +138,42 @@ func (s *ProductService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
+func (s *ProductService) AdjustStock(ctx context.Context, id int, req model.StockAdjustmentRequest) (*model.StockAdjustmentResult, error) {
+	if req.Type != model.MovementIn && req.Type != model.MovementOut {
+		return nil, validationError("type must be one of in, out")
+	}
+	if req.Qty <= 0 {
+		return nil, validationError("qty must be greater than zero")
+	}
+
+	result, err := s.repo.AdjustStock(ctx, id, req.Type, req.Qty, req.Note)
+	if err != nil {
+		return nil, mapRepositoryError(err)
+	}
+	return result, nil
+}
+
+func (s *ProductService) ListMovements(ctx context.Context, id int) ([]model.StockMovement, error) {
+	if _, err := s.repo.GetByID(ctx, id); err != nil {
+		return nil, mapRepositoryError(err)
+	}
+
+	movements, err := s.repo.ListMovements(ctx, id)
+	if err != nil {
+		return nil, mapRepositoryError(err)
+	}
+	return movements, nil
+}
+
 func mapRepositoryError(err error) error {
+	var insufficient *repository.InsufficientStockError
 	switch {
+	case errors.As(err, &insufficient):
+		return &Error{
+			Code:    CodeInsufficientStock,
+			Message: "insufficient stock",
+			Fields:  map[string]any{"available": insufficient.Available},
+		}
 	case errors.Is(err, repository.ErrNotFound):
 		return &Error{Code: CodeProductNotFound, Message: "product not found"}
 	case errors.Is(err, repository.ErrDuplicateSKU):
