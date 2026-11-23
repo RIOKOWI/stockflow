@@ -1,4 +1,4 @@
-
+-- +goose Up
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     sku TEXT NOT NULL UNIQUE,
@@ -9,5 +9,5 @@ CREATE TABLE products (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-
+-- +goose Down
 DROP TABLE products;
