@@ -15,3 +15,14 @@ type StockMovement struct {
 	Note      *string   `json:"note"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type StockAdjustmentRequest struct {
+	Type string  `json:"type"`
+	Qty  int     `json:"qty"`
+	Note *string `json:"note"`
+}
+
+type StockAdjustmentResult struct {
+	Stock    int           `json:"stock"`
+	Movement StockMovement `json:"movement"`
+}
