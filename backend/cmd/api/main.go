@@ -66,6 +66,11 @@ func run(logger *slog.Logger) error {
 	productHandler := handler.NewProductHandler(productSvc)
 	productHandler.RegisterRoutes(router)
 
+	orderRepo := repository.NewOrderRepository(pool)
+	orderSvc := service.NewOrderService(orderRepo)
+	orderHandler := handler.NewOrderHandler(orderSvc)
+	orderHandler.RegisterRoutes(router)
+
 	server := &http.Server{
 		Addr:              ":" + cfg.AppPort,
 		Handler:           router,
