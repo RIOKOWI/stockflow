@@ -18,6 +18,15 @@ var (
 	ErrHasHistory   = errors.New("product has history")
 )
 
+// InsufficientStockError reports how much stock was actually available.
+type InsufficientStockError struct {
+	Available int
+}
+
+func (e *InsufficientStockError) Error() string {
+	return fmt.Sprintf("insufficient stock: %d available", e.Available)
+}
+
 type ProductRepository struct {
 	pool *pgxpool.Pool
 }
@@ -194,6 +203,79 @@ func (r *ProductRepository) Delete(ctx context.Context, id int) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+// AdjustStock updates product stock and records the matching movement in one transaction.
+func (r *ProductRepository) AdjustStock(ctx context.Context, productID int, movementType string, qty int, note *string) (*model.StockAdjustmentResult, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	var current int
+	err = tx.QueryRow(ctx, `SELECT stock FROM products WHERE id = $1 FOR UPDATE`, productID).Scan(&current)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	newStock := current + qty
+	if movementType == model.MovementOut {
+		if current < qty {
+			return nil, &InsufficientStockError{Available: current}
+		}
+		newStock = current - qty
+	}
+
+	if _, err := tx.Exec(ctx, `UPDATE products SET stock = $2 WHERE id = $1`, productID, newStock); err != nil {
+		return nil, mapPGError(err)
+	}
+
+	var movement model.StockMovement
+	movement.ProductID = productID
+	err = tx.QueryRow(ctx, `
+		INSERT INTO stock_movements (product_id, type, qty, note)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, type, qty, note, created_at`,
+		productID, movementType, qty, note).Scan(
+		&movement.ID, &movement.Type, &movement.Qty, &movement.Note, &movement.CreatedAt)
+	if err != nil {
+		return nil, mapPGError(err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return &model.StockAdjustmentResult{Stock: newStock, Movement: movement}, nil
+}
+
+// ListMovements returns the product movement history, newest first.
+func (r *ProductRepository) ListMovements(ctx context.Context, productID int) ([]model.StockMovement, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, product_id, type, qty, note, created_at
+		FROM stock_movements
+		WHERE product_id = $1
+		ORDER BY created_at DESC, id DESC`, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	movements := []model.StockMovement{}
+	for rows.Next() {
+		var m model.StockMovement
+		if err := rows.Scan(&m.ID, &m.ProductID, &m.Type, &m.Qty, &m.Note, &m.CreatedAt); err != nil {
+			return nil, err
+		}
+		movements = append(movements, m)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return movements, nil
 }
 
 func mapPGError(err error) error {
