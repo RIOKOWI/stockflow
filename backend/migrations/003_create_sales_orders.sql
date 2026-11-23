@@ -1,4 +1,4 @@
-
+-- +goose Up
 CREATE TABLE sales_orders (
     id SERIAL PRIMARY KEY,
     customer TEXT NOT NULL,
@@ -11,5 +11,5 @@ CREATE TABLE sales_orders (
 CREATE INDEX idx_sales_orders_status ON sales_orders(status);
 CREATE INDEX idx_sales_orders_created_at ON sales_orders(created_at DESC);
 
-
+-- +goose Down
 DROP TABLE sales_orders;
