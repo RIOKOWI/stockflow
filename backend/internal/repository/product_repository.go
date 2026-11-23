@@ -18,13 +18,14 @@ var (
 	ErrHasHistory   = errors.New("product has history")
 )
 
-// InsufficientStockError reports how much stock was actually available.
+
 type InsufficientStockError struct {
+	SKU       string
 	Available int
 }
 
 func (e *InsufficientStockError) Error() string {
-	return fmt.Sprintf("insufficient stock: %d available", e.Available)
+	return fmt.Sprintf("insufficient stock for %q: %d available", e.SKU, e.Available)
 }
 
 type ProductRepository struct {
