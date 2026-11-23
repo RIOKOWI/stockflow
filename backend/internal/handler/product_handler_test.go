@@ -56,6 +56,8 @@ func setupTestEnv(t *testing.T) *testEnv {
 		t.Fatalf("migration failed: %v", err)
 	}
 
+	pool.Exec(ctx, `DELETE FROM sales_order_items WHERE order_id IN (SELECT id FROM sales_orders WHERE customer LIKE 'TEST%')`)
+	pool.Exec(ctx, `DELETE FROM sales_orders WHERE customer LIKE 'TEST%'`)
 	pool.Exec(ctx, `DELETE FROM stock_movements WHERE product_id IN (SELECT id FROM products WHERE sku LIKE 'TEST-%')`)
 	pool.Exec(ctx, `DELETE FROM products WHERE sku LIKE 'TEST-%'`)
 
@@ -63,8 +65,13 @@ func setupTestEnv(t *testing.T) *testEnv {
 	svc := service.NewProductService(repo)
 	h := handler.NewProductHandler(svc)
 
+	orderRepo := repository.NewOrderRepository(pool)
+	orderSvc := service.NewOrderService(orderRepo)
+	orderHandler := handler.NewOrderHandler(orderSvc)
+
 	r := chi.NewRouter()
 	h.RegisterRoutes(r)
+	orderHandler.RegisterRoutes(r)
 
 	return &testEnv{router: r, pool: pool}
 }
