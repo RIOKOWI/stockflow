@@ -11,12 +11,14 @@ import (
 )
 
 const (
-	CodeValidation        = "VALIDATION_ERROR"
-	CodeProductNotFound   = "PRODUCT_NOT_FOUND"
-	CodeProductExists     = "PRODUCT_ALREADY_EXISTS"
-	CodeProductHasHistory = "PRODUCT_HAS_HISTORY"
-	CodeInsufficientStock = "INSUFFICIENT_STOCK"
-	CodeInternal          = "INTERNAL_SERVER_ERROR"
+	CodeValidation            = "VALIDATION_ERROR"
+	CodeProductNotFound       = "PRODUCT_NOT_FOUND"
+	CodeProductExists         = "PRODUCT_ALREADY_EXISTS"
+	CodeProductHasHistory     = "PRODUCT_HAS_HISTORY"
+	CodeInsufficientStock     = "INSUFFICIENT_STOCK"
+	CodeOrderNotFound         = "ORDER_NOT_FOUND"
+	CodeOrderAlreadyCancelled = "ORDER_ALREADY_CANCELLED"
+	CodeInternal              = "INTERNAL_SERVER_ERROR"
 )
 
 type Error struct {
@@ -167,13 +169,27 @@ func (s *ProductService) ListMovements(ctx context.Context, id int) ([]model.Sto
 
 func mapRepositoryError(err error) error {
 	var insufficient *repository.InsufficientStockError
+	var unknownSKU *repository.UnknownSKUError
+	var inactive *repository.InactiveProductError
 	switch {
 	case errors.As(err, &insufficient):
+		fields := map[string]any{"available": insufficient.Available}
+		if insufficient.SKU != "" {
+			fields["sku"] = insufficient.SKU
+		}
 		return &Error{
 			Code:    CodeInsufficientStock,
 			Message: "insufficient stock",
-			Fields:  map[string]any{"available": insufficient.Available},
+			Fields:  fields,
 		}
+	case errors.As(err, &unknownSKU):
+		return validationError("sku %s does not exist", unknownSKU.SKU)
+	case errors.As(err, &inactive):
+		return validationError("product %s is inactive", inactive.SKU)
+	case errors.Is(err, repository.ErrOrderNotFound):
+		return &Error{Code: CodeOrderNotFound, Message: "order not found"}
+	case errors.Is(err, repository.ErrOrderAlreadyCancelled):
+		return &Error{Code: CodeOrderAlreadyCancelled, Message: "order already cancelled"}
 	case errors.Is(err, repository.ErrNotFound):
 		return &Error{Code: CodeProductNotFound, Message: "product not found"}
 	case errors.Is(err, repository.ErrDuplicateSKU):
