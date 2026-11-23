@@ -46,9 +46,9 @@ func statusForCode(code string) int {
 	switch code {
 	case service.CodeValidation:
 		return http.StatusBadRequest
-	case service.CodeProductNotFound:
+	case service.CodeProductNotFound, service.CodeOrderNotFound:
 		return http.StatusNotFound
-	case service.CodeProductExists, service.CodeProductHasHistory, service.CodeInsufficientStock:
+	case service.CodeProductExists, service.CodeProductHasHistory, service.CodeInsufficientStock, service.CodeOrderAlreadyCancelled:
 		return http.StatusConflict
 	case service.CodeInternal:
 		return http.StatusInternalServerError
