@@ -1,4 +1,4 @@
-
+-- +goose Up
 WITH seeded AS (
     INSERT INTO products (sku, name, price, stock)
     VALUES
@@ -82,7 +82,7 @@ moved AS (
 INSERT INTO stock_movements (product_id, type, qty, note)
 SELECT id, 'out', qty, 'Seed sales order #' || order_id FROM moved;
 
-
+-- +goose Down
 DELETE FROM stock_movements WHERE note LIKE 'Seed sales order #%';
 DELETE FROM stock_movements WHERE note = 'Initial stock (seed)';
 DELETE FROM sales_order_items
