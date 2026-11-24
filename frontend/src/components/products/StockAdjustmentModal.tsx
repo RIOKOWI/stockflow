@@ -109,7 +109,7 @@ export default function StockAdjustmentModal({
 
       {product ? (
         <p className="stock-current">
-          {product.sku} · {product.name} — current stock:{" "}
+          {product.sku} · {product.name} - current stock:{" "}
           <strong>{product.stock}</strong> units
         </p>
       ) : (
