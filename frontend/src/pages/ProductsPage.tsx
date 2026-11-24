@@ -5,6 +5,7 @@ import DeleteProductDialog from "../components/products/DeleteProductDialog";
 import ProductDetailModal from "../components/products/ProductDetailModal";
 import ProductFormModal from "../components/products/ProductFormModal";
 import ProductTable from "../components/products/ProductTable";
+import StockAdjustmentModal from "../components/products/StockAdjustmentModal";
 import type { Product, ProductMeta } from "../types/api";
 
 const LIMIT = 10;
@@ -22,6 +23,8 @@ export default function ProductsPage() {
   const [detailId, setDetailId] = useState<number | null>(null);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [stockTargetId, setStockTargetId] = useState<number | null>(null);
+  const [stockVersion, setStockVersion] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -87,6 +90,13 @@ export default function ProductsPage() {
     refresh();
   };
 
+  const handleStockAdjusted = (result: { stock: number }) => {
+    setStockTargetId(null);
+    setNotice(`Stock updated. New stock: ${result.stock} units.`);
+    setStockVersion((version) => version + 1);
+    refresh();
+  };
+
   return (
     <section className="products">
       <header className="products-header">
@@ -139,6 +149,10 @@ export default function ProductsPage() {
           }}
           onEdit={(product) => openEditor({ mode: "edit", product })}
           onDelete={(product) => setDeleteTarget(product)}
+          onAdjustStock={(product) => {
+            setNotice(null);
+            setStockTargetId(product.id);
+          }}
         />
       )}
 
@@ -170,8 +184,21 @@ export default function ProductsPage() {
         <ProductDetailModal
           key={detailId}
           productId={detailId}
+          stockVersion={stockVersion}
           onClose={() => setDetailId(null)}
           onEdit={(product) => openEditor({ mode: "edit", product })}
+          onAdjustStock={(product) => {
+            setNotice(null);
+            setStockTargetId(product.id);
+          }}
+        />
+      )}
+
+      {stockTargetId !== null && (
+        <StockAdjustmentModal
+          productId={stockTargetId}
+          onClose={() => setStockTargetId(null)}
+          onAdjusted={handleStockAdjusted}
         />
       )}
 
