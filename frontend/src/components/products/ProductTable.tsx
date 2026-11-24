@@ -4,9 +4,17 @@ import { formatIDR } from "../../utils/currency";
 
 interface ProductTableProps {
   products: Product[];
+  onView: (product: Product) => void;
+  onEdit: (product: Product) => void;
+  onDelete: (product: Product) => void;
 }
 
-export default function ProductTable({ products }: ProductTableProps) {
+export default function ProductTable({
+  products,
+  onView,
+  onEdit,
+  onDelete,
+}: ProductTableProps) {
   return (
     <table className="product-table">
       <thead>
@@ -18,13 +26,22 @@ export default function ProductTable({ products }: ProductTableProps) {
           <th scope="col">Stock</th>
           <th scope="col">Status</th>
           <th scope="col">Created At</th>
+          <th scope="col">Actions</th>
         </tr>
       </thead>
       <tbody>
         {products.map((product) => (
           <tr key={product.id}>
             <td className="numeric">{product.id}</td>
-            <td className="sku">{product.sku}</td>
+            <td className="sku">
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => onView(product)}
+              >
+                {product.sku}
+              </button>
+            </td>
             <td>{product.name}</td>
             <td className="numeric">{formatIDR(product.price)}</td>
             <td className="numeric">{product.stock}</td>
@@ -38,6 +55,29 @@ export default function ProductTable({ products }: ProductTableProps) {
               </span>
             </td>
             <td>{formatDate(product.created_at)}</td>
+            <td className="actions">
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => onView(product)}
+              >
+                View
+              </button>
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => onEdit(product)}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className="link-button link-danger"
+                onClick={() => onDelete(product)}
+              >
+                Delete
+              </button>
+            </td>
           </tr>
         ))}
       </tbody>
