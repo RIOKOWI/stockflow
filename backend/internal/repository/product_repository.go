@@ -92,6 +92,14 @@ func (r *ProductRepository) List(ctx context.Context, f model.ProductFilter) ([]
 		args = append(args, *f.MaxPrice)
 		conditions = append(conditions, fmt.Sprintf("p.price <= $%d", len(args)))
 	}
+	if f.IsActive != nil {
+		args = append(args, *f.IsActive)
+		conditions = append(conditions, fmt.Sprintf("p.is_active = $%d", len(args)))
+	}
+	if f.MaxStock != nil {
+		args = append(args, *f.MaxStock)
+		conditions = append(conditions, fmt.Sprintf("p.stock <= $%d", len(args)))
+	}
 	where := strings.Join(conditions, " AND ")
 
 	var total int
@@ -206,7 +214,7 @@ func (r *ProductRepository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-// AdjustStock updates product stock and records the matching movement in one transaction.
+
 func (r *ProductRepository) AdjustStock(ctx context.Context, productID int, movementType string, qty int, note *string) (*model.StockAdjustmentResult, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
@@ -253,7 +261,7 @@ func (r *ProductRepository) AdjustStock(ctx context.Context, productID int, move
 	return &model.StockAdjustmentResult{Stock: newStock, Movement: movement}, nil
 }
 
-// ListMovements returns the product movement history, newest first.
+
 func (r *ProductRepository) ListMovements(ctx context.Context, productID int) ([]model.StockMovement, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT id, product_id, type, qty, note, created_at
