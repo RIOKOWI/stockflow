@@ -16,7 +16,7 @@ function App() {
         <OrderDetailPage orderId={Number(orderMatch[1])} />
       ) : route === "/orders" ? (
         <OrdersPage />
-      ) : route === "/dashboard" ? (
+      ) : route === "/dashboard" || route === "" ? (
         <DashboardPage />
       ) : (
         <ProductsPage />
