@@ -49,6 +49,35 @@ func (s *OrderService) Create(ctx context.Context, req model.CreateOrderRequest)
 	return order, nil
 }
 
+var orderSortColumns = map[string]bool{
+	"id":         true,
+	"customer":   true,
+	"total":      true,
+	"status":     true,
+	"created_at": true,
+}
+
+func (s *OrderService) List(ctx context.Context, filter model.OrderFilter) (model.OrderList, error) {
+	if filter.Page < 1 {
+		return model.OrderList{}, validationError("page must be greater than zero")
+	}
+	if filter.Limit < 1 || filter.Limit > 100 {
+		return model.OrderList{}, validationError("limit must be between 1 and 100")
+	}
+	if !orderSortColumns[filter.SortBy] {
+		return model.OrderList{}, validationError("sort must be one of id, customer, total, status, created_at")
+	}
+	if filter.SortOrder != "asc" && filter.SortOrder != "desc" {
+		return model.OrderList{}, validationError("order must be asc or desc")
+	}
+
+	orders, total, err := s.repo.List(ctx, filter)
+	if err != nil {
+		return model.OrderList{}, mapRepositoryError(err)
+	}
+	return model.OrderList{Orders: orders, Page: filter.Page, Limit: filter.Limit, Total: total}, nil
+}
+
 func (s *OrderService) Get(ctx context.Context, id int) (*model.SalesOrder, error) {
 	order, err := s.repo.GetByID(ctx, id)
 	if err != nil {
