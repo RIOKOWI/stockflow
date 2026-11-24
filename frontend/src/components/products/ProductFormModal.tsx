@@ -9,7 +9,6 @@ import {
 } from "../../utils/validation";
 
 interface ProductFormModalProps {
-  /** Omitted for creation, provided for editing. */
   product?: Product;
   onClose: () => void;
   onSaved: (product: Product) => void;
