@@ -1,5 +1,5 @@
 import type { Product } from "../../types/api";
-import { formatDate } from "../../utils/date";
+import { formatRelativeTime } from "../../utils/date";
 import { formatIDR } from "../../utils/currency";
 
 interface ProductTableProps {
@@ -27,7 +27,7 @@ export default function ProductTable({
           <th scope="col">Price</th>
           <th scope="col">Stock</th>
           <th scope="col">Status</th>
-          <th scope="col">Created At</th>
+          <th scope="col">Last Movement</th>
           <th scope="col">Actions</th>
         </tr>
       </thead>
@@ -56,25 +56,25 @@ export default function ProductTable({
                 {product.is_active ? "Active" : "Inactive"}
               </span>
             </td>
-            <td>{formatDate(product.created_at)}</td>
+            <td>{formatRelativeTime(product.last_movement_at)}</td>
             <td className="actions">
               <button
                 type="button"
-                className="link-button"
+                className="link-button1"
                 onClick={() => onView(product)}
               >
                 View
               </button>
               <button
                 type="button"
-                className="link-button"
+                className="link-button2"
                 onClick={() => onEdit(product)}
               >
                 Edit
               </button>
               <button
                 type="button"
-                className="link-button"
+                className="link-button3"
                 onClick={() => onAdjustStock(product)}
               >
                 Stock
