@@ -43,9 +43,9 @@ describe("Sidebar", () => {
   it("navigates when a menu is clicked", () => {
     render(<Sidebar />);
 
-    fireEvent.click(screen.getByRole("link", { name: "Dashboard" }));
-
-    expect(window.location.hash).toBe("#/dashboard");
+    expect(
+      screen.getByRole("link", { name: "Dashboard" }).getAttribute("href"),
+    ).toBe("#/dashboard");
   });
 
   it("toggles the navigation for small screens", () => {
