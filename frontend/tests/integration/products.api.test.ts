@@ -78,4 +78,26 @@ integration("products api against the real backend", () => {
     expect(second.meta.total_pages).toBe(Math.ceil(first.meta.total / 5));
     expect(second.data[0].id).not.toBe(first.data[0].id);
   });
+
+  it("searches the product list by sku and by name", async () => {
+    const created = await createProduct({
+      sku: `${SKU}-S`,
+      name: "Searchable Widget",
+      price: 1000,
+    });
+
+    try {
+      const bySku = await getProducts(1, 10, `${SKU}-S`);
+      expect(bySku.data.map((item) => item.id)).toContain(created.id);
+
+      const byName = await getProducts(1, 10, "searchable widget");
+      expect(byName.data.map((item) => item.id)).toContain(created.id);
+
+      const noMatch = await getProducts(1, 10, "no-such-product-xyz");
+      expect(noMatch.data).toHaveLength(0);
+      expect(noMatch.meta.total).toBe(0);
+    } finally {
+      await deleteProduct(created.id);
+    }
+  });
 });
