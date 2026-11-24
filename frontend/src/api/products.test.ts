@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { createProduct, deleteProduct, getProduct, updateProduct } from "./products";
+import {
+  createProduct,
+  deleteProduct,
+  getProduct,
+  getProducts,
+  updateProduct,
+} from "./products";
 import api from "./client";
 
 vi.mock("./client", () => ({
@@ -68,5 +74,103 @@ describe("products api", () => {
 
     await expect(deleteProduct(13)).resolves.toBeUndefined();
     expect(mockedDelete).toHaveBeenCalledWith("/api/products/13");
+  });
+});
+
+describe("getProducts", () => {
+  const listProduct = {
+    id: 13,
+    sku: "SKU-001",
+    name: "iCrystal",
+    price: 1500000,
+    stock: 48,
+    is_active: true,
+    created_at: "2026-11-23T10:49:45.169696+07:00",
+    last_movement_at: null,
+  };
+
+  it("reads the products with the pagination parameters", async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        success: true,
+        message: "",
+        data: [listProduct],
+        meta: { page: 2, limit: 10, total: 1, total_pages: 1 },
+      },
+    });
+
+    const response = await getProducts(2, 10);
+
+    expect(response.data).toEqual([listProduct]);
+    expect(response.meta.total).toBe(1);
+    expect(mockedGet).toHaveBeenCalledWith("/api/products", {
+      params: { page: 2, limit: 10 },
+      signal: undefined,
+    });
+  });
+
+  it("sends the search term when there is one", async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        success: true,
+        message: "",
+        data: [],
+        meta: { page: 1, limit: 10, total: 0, total_pages: 1 },
+      },
+    });
+
+    await getProducts(1, 10, "mouse");
+
+    expect(mockedGet).toHaveBeenCalledWith("/api/products", {
+      params: { page: 1, limit: 10, search: "mouse" },
+      signal: undefined,
+    });
+  });
+
+  it("passes the abort signal to the client", async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        success: true,
+        message: "",
+        data: [],
+        meta: { page: 1, limit: 10, total: 0, total_pages: 1 },
+      },
+    });
+
+    const controller = new AbortController();
+    await getProducts(1, 10, "mouse", controller.signal);
+
+    expect(mockedGet).toHaveBeenCalledWith("/api/products", {
+      params: { page: 1, limit: 10, search: "mouse" },
+      signal: controller.signal,
+    });
+  });
+
+  it("returns an empty list without an error", async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        success: true,
+        message: "",
+        data: [],
+        meta: { page: 1, limit: 10, total: 0, total_pages: 1 },
+      },
+    });
+
+    const response = await getProducts(1, 10);
+
+    expect(response.data).toEqual([]);
+    expect(response.meta.total).toBe(0);
+  });
+
+  it("propagates an unexpected server error", async () => {
+    const failure = {
+      response: {
+        status: 500,
+        data: { error: { code: "INTERNAL_SERVER_ERROR", message: "boom" } },
+      },
+    };
+    mockedGet.mockRejectedValue(failure);
+
+    await expect(getProducts(1, 10)).rejects.toBe(failure);
   });
 });
