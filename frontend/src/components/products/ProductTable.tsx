@@ -7,6 +7,7 @@ interface ProductTableProps {
   onView: (product: Product) => void;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onAdjustStock: (product: Product) => void;
 }
 
 export default function ProductTable({
@@ -14,6 +15,7 @@ export default function ProductTable({
   onView,
   onEdit,
   onDelete,
+  onAdjustStock,
 }: ProductTableProps) {
   return (
     <table className="product-table">
@@ -69,6 +71,13 @@ export default function ProductTable({
                 onClick={() => onEdit(product)}
               >
                 Edit
+              </button>
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => onAdjustStock(product)}
+              >
+                Stock
               </button>
               <button
                 type="button"
