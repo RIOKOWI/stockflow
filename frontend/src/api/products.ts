@@ -7,12 +7,24 @@ import type {
   UpdateProductRequest,
 } from "../types/api";
 
+export interface ProductListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  is_active?: boolean;
+  max_stock?: number;
+}
+
 export async function getProducts(
   page = 1,
   limit = 10,
+  search?: string,
+  signal?: AbortSignal,
+  extra?: Omit<ProductListParams, "page" | "limit" | "search">,
 ): Promise<ProductsResponse> {
   const response = await api.get<ProductsResponse>("/api/products", {
-    params: { page, limit },
+    params: { page, limit, ...(search ? { search } : {}), ...extra },
+    signal,
   });
 
   return response.data;
