@@ -21,3 +21,31 @@ export function validateProductForm(values: ProductFormValues): ProductFormError
 
   return errors;
 }
+
+export interface StockAdjustmentValues {
+  type: "in" | "out";
+  qty: string;
+}
+
+export type StockAdjustmentErrors = Partial<
+  Record<keyof StockAdjustmentValues, string>
+>;
+
+export function validateStockAdjustment(
+  values: StockAdjustmentValues,
+): StockAdjustmentErrors {
+  const errors: StockAdjustmentErrors = {};
+
+  if (values.type !== "in" && values.type !== "out") {
+    errors.type = "Type must be in or out";
+  }
+
+  const qty = values.qty.trim();
+  if (!qty) {
+    errors.qty = "Quantity is required";
+  } else if (!/^\d+$/.test(qty) || Number(qty) <= 0) {
+    errors.qty = "Quantity must be a whole number greater than zero";
+  }
+
+  return errors;
+}
