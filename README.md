@@ -561,3 +561,32 @@ Request -> `handler` -> `service` -> `repository` -> PostgreSQL.
 - 23 november = i spent 8 hours 14 minute
 - 24 november = i spent 7 hours 3 minute ++
 - total =  i spent 15 hours 17 minute ++
+  
+</br>
+<img width="1260" height="768" alt="Screenshot (1149)" src="https://github.com/user-attachments/assets/18f96252-15ae-40a8-a422-ca4e615d87fb" />
+
+## Preview Apps
+### Dashboard Summary
+<img width="1366" height="647" alt="screencapture-localhost-5173-2026-11-24-18_53_36" src="https://github.com/user-attachments/assets/ef2fc151-ef26-4df7-b611-54a96557455f" />
+
+
+## Products Page (filter: all/active/inactive/low stock <=10) w/ pagination
+<img width="1366" height="721" alt="screencapture-localhost-5173-2026-11-24-18_54_24" src="https://github.com/user-attachments/assets/ff9564f8-81a6-42eb-8aa6-2ef93da09db3" />
+
+<img width="1366" height="647" alt="screencapture-localhost-5173-2026-11-24-18_54_38" src="https://github.com/user-attachments/assets/d88c0420-806e-43e0-94c1-953c8594dd59" />
+
+<img width="1366" height="647" alt="screencapture-localhost-5173-2026-11-24-18_54_52" src="https://github.com/user-attachments/assets/b2eacb4d-96c6-4f87-8908-592ce8e6d2e7" />
+
+### Search Products w/ debounce 300ms
+<img width="1366" height="647" alt="screencapture-localhost-5173-2026-11-24-20_14_13" src="https://github.com/user-attachments/assets/a5a64cd7-193b-4246-a2b8-5ae95949dd17" />
+
+## Insufficient Stock when order qty > stock & if order correctly u can multi order
+<img width="1366" height="647" alt="screencapture-localhost-5173-2026-11-24-20_14_51" src="https://github.com/user-attachments/assets/b1b59438-bf2b-4304-8e3d-cc854845561a" />
+
+### Cancel Order w/ restore stock products(see first image Product Page iZen product)
+<img width="1366" height="647" alt="screencapture-localhost-5173-2026-11-24-20_21_55" src="https://github.com/user-attachments/assets/9a5d8d1e-2fa0-4e9b-9669-3c3aaf58d846" />
+<img width="1366" height="721" alt="screencapture-localhost-5173-2026-11-24-20_18_20" src="https://github.com/user-attachments/assets/da5a6eb9-fae8-4959-b298-6fe83e99393d" />
+
+
+
+
