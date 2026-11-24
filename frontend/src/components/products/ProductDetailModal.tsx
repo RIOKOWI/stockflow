@@ -4,11 +4,14 @@ import { getProduct } from "../../api/products";
 import type { Product } from "../../types/api";
 import { formatIDR } from "../../utils/currency";
 import { formatDate } from "../../utils/date";
+import StockMovementHistory from "./StockMovementHistory";
 
 interface ProductDetailModalProps {
   productId: number;
+  stockVersion: number;
   onClose: () => void;
   onEdit: (product: Product) => void;
+  onAdjustStock: (product: Product) => void;
 }
 
 type DetailState =
@@ -18,8 +21,10 @@ type DetailState =
 
 export default function ProductDetailModal({
   productId,
+  stockVersion,
   onClose,
   onEdit,
+  onAdjustStock,
 }: ProductDetailModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [state, setState] = useState<DetailState>({ status: "loading" });
@@ -42,7 +47,7 @@ export default function ProductDetailModal({
     );
 
     return () => controller.abort();
-  }, [productId, reload]);
+  }, [productId, reload, stockVersion]);
 
   const retry = () => {
     setState({ status: "loading" });
@@ -116,6 +121,13 @@ export default function ProductDetailModal({
             <button
               type="button"
               className="button button-secondary"
+              onClick={() => onAdjustStock(state.product)}
+            >
+              Adjust stock
+            </button>
+            <button
+              type="button"
+              className="button button-secondary"
               onClick={() => onEdit(state.product)}
             >
               Edit
@@ -124,6 +136,11 @@ export default function ProductDetailModal({
               Close
             </button>
           </div>
+
+          <StockMovementHistory
+            productId={productId}
+            reloadToken={stockVersion}
+          />
         </>
       )}
     </dialog>
