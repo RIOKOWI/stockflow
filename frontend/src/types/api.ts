@@ -83,3 +83,50 @@ export interface StockMovementsResponse {
   message: string;
   data: StockMovement[];
 }
+
+export type OrderStatus = "CREATED" | "CANCELLED";
+
+export interface OrderItem {
+  id: number;
+  order_id: number;
+  sku: string;
+  name: string;
+  qty: number;
+  unit_price: number;
+  subtotal: number;
+}
+
+export interface Order {
+  id: number;
+  customer: string;
+  status: OrderStatus;
+  total: number;
+  created_at: string;
+  cancelled_at: string | null;
+  items?: OrderItem[];
+}
+
+export interface OrderResponse {
+  success: boolean;
+  message: string;
+  data: Order;
+}
+
+export interface OrderMeta {
+  page: number;
+  limit: number;
+  total: number;
+  total_pages: number;
+}
+
+export interface OrdersResponse {
+  success: boolean;
+  message: string;
+  data: Order[];
+  meta: OrderMeta;
+}
+
+export interface CreateOrderRequest {
+  customer: string;
+  items: { sku: string; qty: number }[];
+}
