@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/RIOKOWI/stockflow/internal/model"
 	"github.com/jackc/pgx/v5"
@@ -146,6 +147,48 @@ func (r *OrderRepository) Create(ctx context.Context, customer string, items []m
 	return order, nil
 }
 
+
+func (r *OrderRepository) List(ctx context.Context, f model.OrderFilter) ([]model.SalesOrder, int, error) {
+	conditions := []string{"TRUE"}
+	args := []any{}
+
+	if f.Search != "" {
+		args = append(args, "%"+escapeLike(f.Search)+"%")
+		conditions = append(conditions, fmt.Sprintf("customer ILIKE $%d ESCAPE '\\'", len(args)))
+	}
+	where := strings.Join(conditions, " AND ")
+
+	var total int
+	if err := r.pool.QueryRow(ctx, `SELECT count(*) FROM sales_orders WHERE `+where, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	args = append(args, f.Limit, (f.Page-1)*f.Limit)
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, customer, status, total, created_at, cancelled_at
+		FROM sales_orders
+		WHERE `+where+fmt.Sprintf(`
+		ORDER BY %s %s, id DESC
+		LIMIT $%d OFFSET $%d`, f.SortBy, f.SortOrder, len(args)-1, len(args)), args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	orders := []model.SalesOrder{}
+	for rows.Next() {
+		var o model.SalesOrder
+		if err := rows.Scan(&o.ID, &o.Customer, &o.Status, &o.Total, &o.CreatedAt, &o.CancelledAt); err != nil {
+			return nil, 0, err
+		}
+		orders = append(orders, o)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	return orders, total, nil
+}
 
 func (r *OrderRepository) GetByID(ctx context.Context, id int) (*model.SalesOrder, error) {
 	var order model.SalesOrder
