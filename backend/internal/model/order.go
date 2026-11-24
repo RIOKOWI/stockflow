@@ -36,3 +36,18 @@ type OrderItemInput struct {
 	SKU string `json:"sku"`
 	Qty int    `json:"qty"`
 }
+
+type OrderFilter struct {
+	Search    string
+	SortBy    string
+	SortOrder string
+	Page      int
+	Limit     int
+}
+
+type OrderList struct {
+	Orders []SalesOrder
+	Page   int
+	Limit  int
+	Total  int
+}
