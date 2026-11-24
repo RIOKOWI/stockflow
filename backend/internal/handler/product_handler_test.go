@@ -178,7 +178,6 @@ func TestCreateProduct_Success(t *testing.T) {
 	if data["price"].(float64) != 99000 {
 		t.Errorf("unexpected price: %v", data["price"])
 	}
-	// Initial stock must default to 0.
 	if data["stock"].(float64) != 0 {
 		t.Errorf("expected initial stock=0, got %v", data["stock"])
 	}
