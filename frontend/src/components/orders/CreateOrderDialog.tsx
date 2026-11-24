@@ -15,9 +15,7 @@ export default function CreateOrderDialog({
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (dialog && !dialog.open && typeof dialog.showModal === "function") {
-      dialog.showModal();
-    }
+    if (dialog && !dialog.open) dialog.showModal();
   }, []);
 
   return (
