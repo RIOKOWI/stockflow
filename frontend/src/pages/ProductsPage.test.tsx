@@ -81,6 +81,7 @@ describe("ProductsPage search", () => {
           10,
           "mouse",
           expect.any(AbortSignal),
+          {},
         ),
       { timeout: 2000 },
     );
@@ -103,6 +104,7 @@ describe("ProductsPage search", () => {
           10,
           "mouse",
           expect.any(AbortSignal),
+          {},
         ),
       { timeout: 2000 },
     );
@@ -140,6 +142,7 @@ describe("ProductsPage search", () => {
           10,
           "mouse",
           expect.any(AbortSignal),
+          {},
         ),
       { timeout: 2000 },
     );
@@ -155,6 +158,7 @@ describe("ProductsPage search", () => {
           10,
           undefined,
           expect.any(AbortSignal),
+          {},
         ),
       { timeout: 2000 },
     );
