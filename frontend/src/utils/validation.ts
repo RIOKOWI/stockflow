@@ -49,3 +49,56 @@ export function validateStockAdjustment(
 
   return errors;
 }
+
+export interface OrderItemValues {
+  sku: string;
+  qty: string;
+}
+
+export interface OrderFormValues {
+  customer: string;
+  items: OrderItemValues[];
+}
+
+export interface OrderItemErrors {
+  sku?: string;
+  qty?: string;
+}
+
+export interface OrderFormErrors {
+  customer?: string;
+  items?: string;
+  itemErrors: Record<number, OrderItemErrors>;
+}
+
+export function validateOrderForm(values: OrderFormValues): OrderFormErrors {
+  const errors: OrderFormErrors = { itemErrors: {} };
+
+  if (!values.customer.trim()) errors.customer = "Customer is required";
+  if (values.items.length === 0) errors.items = "Add at least one item";
+
+  const seen = new Set<string>();
+  values.items.forEach((item, index) => {
+    const itemErrors: OrderItemErrors = {};
+
+    const sku = item.sku.trim();
+    if (!sku) {
+      itemErrors.sku = "Select a product";
+    } else if (seen.has(sku)) {
+      itemErrors.sku = "Duplicate SKU in this order";
+    } else {
+      seen.add(sku);
+    }
+
+    const qty = item.qty.trim();
+    if (!qty) {
+      itemErrors.qty = "Quantity is required";
+    } else if (!/^\d+$/.test(qty) || Number(qty) <= 0) {
+      itemErrors.qty = "Quantity must be a whole number greater than zero";
+    }
+
+    if (itemErrors.sku || itemErrors.qty) errors.itemErrors[index] = itemErrors;
+  });
+
+  return errors;
+}
