@@ -30,7 +30,7 @@ func Load() (*Config, error) {
 		DBPassword:     getenv("DB_PASSWORD", "stockflow_dev_password"),
 		DBName:         getenv("DB_NAME", "stockflow"),
 		DBSSLMode:      getenv("DB_SSLMODE", "disable"),
-		FrontendOrigin: getenv("FRONTEND_ORIGIN", "http://localhost:5175"),
+		FrontendOrigin: getenv("FRONTEND_ORIGIN", "http://localhost:5174"),
 	}
 
 	if err := c.validate(); err != nil {
@@ -61,7 +61,7 @@ func (c *Config) validate() error {
 	return nil
 }
 
-// DSN returns the PostgreSQL connection URL built from the DB_* values.
+
 func (c *Config) DSN() string {
 	u := url.URL{
 		Scheme:   "postgres",
@@ -73,7 +73,7 @@ func (c *Config) DSN() string {
 	return u.String()
 }
 
-// DatabaseURL returns DATABASE_URL when set, otherwise the DSN from DB_*.
+
 func (c *Config) DatabaseURL() string {
 	if v := strings.TrimSpace(os.Getenv("DATABASE_URL")); v != "" {
 		return v
@@ -88,8 +88,6 @@ func getenv(key, fallback string) string {
 	return fallback
 }
 
-// loadDotEnv fills unset environment variables from a .env file. Existing
-// environment variables always win.
 func loadDotEnv(path string) {
 	file, err := os.Open(path)
 	if err != nil {
