@@ -1,24 +1,38 @@
 import { useEffect, useState } from "react";
 import { getErrorMessage } from "../api/errors";
 import { getProducts } from "../api/products";
+import DeleteProductDialog from "../components/products/DeleteProductDialog";
+import ProductDetailModal from "../components/products/ProductDetailModal";
+import ProductFormModal from "../components/products/ProductFormModal";
 import ProductTable from "../components/products/ProductTable";
 import type { Product, ProductMeta } from "../types/api";
 
-const PAGE = 1;
 const LIMIT = 10;
+
+type EditorState = { mode: "create" } | { mode: "edit"; product: Product };
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [meta, setMeta] = useState<ProductMeta | null>(null);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<number | null>(null);
+  const [editor, setEditor] = useState<EditorState | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
 
   useEffect(() => {
     let active = true;
-    getProducts(PAGE, LIMIT).then(
+    getProducts(page, LIMIT).then(
       (response) => {
         if (!active) return;
+        // The last page can disappear after a delete, so fall back to it.
+        if (page > response.meta.total_pages) {
+          setPage(response.meta.total_pages);
+          return;
+        }
         setProducts(response.data);
         setMeta(response.meta);
         setLoading(false);
@@ -32,12 +46,45 @@ export default function ProductsPage() {
     return () => {
       active = false;
     };
-  }, [reload]);
+  }, [reload, page]);
 
   const retry = () => {
     setError(null);
     setLoading(true);
     setReload((count) => count + 1);
+  };
+
+  const refresh = () => {
+    setLoading(true);
+    setReload((count) => count + 1);
+  };
+
+  const goToPage = (nextPage: number) => {
+    setError(null);
+    setLoading(true);
+    setPage(nextPage);
+  };
+
+  const openEditor = (state: EditorState) => {
+    setDetailId(null);
+    setNotice(null);
+    setEditor(state);
+  };
+
+  const handleSaved = (product: Product) => {
+    setEditor(null);
+    setNotice(
+      editor?.mode === "edit"
+        ? `Product ${product.sku} updated successfully.`
+        : `Product ${product.sku} created successfully.`,
+    );
+    refresh();
+  };
+
+  const handleDeleted = () => {
+    setDeleteTarget(null);
+    setNotice("Product deleted successfully.");
+    refresh();
   };
 
   return (
@@ -51,6 +98,22 @@ export default function ProductsPage() {
           </p>
         )}
       </header>
+
+      <div className="products-toolbar">
+        <button
+          type="button"
+          className="button"
+          onClick={() => openEditor({ mode: "create" })}
+        >
+          New product
+        </button>
+      </div>
+
+      {notice && (
+        <p className="state state-success" role="status">
+          {notice}
+        </p>
+      )}
 
       {loading && <p className="state">Loading products…</p>}
 
@@ -68,7 +131,64 @@ export default function ProductsPage() {
       )}
 
       {!loading && !error && products.length > 0 && (
-        <ProductTable products={products} />
+        <ProductTable
+          products={products}
+          onView={(product) => {
+            setNotice(null);
+            setDetailId(product.id);
+          }}
+          onEdit={(product) => openEditor({ mode: "edit", product })}
+          onDelete={(product) => setDeleteTarget(product)}
+        />
+      )}
+
+      {!loading && !error && meta && meta.total_pages > 1 && (
+        <nav className="pagination" aria-label="Product pages">
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={() => goToPage(page - 1)}
+            disabled={page <= 1}
+          >
+            Previous
+          </button>
+          <span className="pagination-status">
+            Page {meta.page} of {meta.total_pages}
+          </span>
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={() => goToPage(page + 1)}
+            disabled={page >= meta.total_pages}
+          >
+            Next
+          </button>
+        </nav>
+      )}
+
+      {detailId !== null && (
+        <ProductDetailModal
+          key={detailId}
+          productId={detailId}
+          onClose={() => setDetailId(null)}
+          onEdit={(product) => openEditor({ mode: "edit", product })}
+        />
+      )}
+
+      {editor && (
+        <ProductFormModal
+          product={editor.mode === "edit" ? editor.product : undefined}
+          onClose={() => setEditor(null)}
+          onSaved={handleSaved}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteProductDialog
+          product={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={handleDeleted}
+        />
       )}
     </section>
   );
