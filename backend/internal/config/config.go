@@ -30,7 +30,7 @@ func Load() (*Config, error) {
 		DBPassword:     getenv("DB_PASSWORD", "stockflow_dev_password"),
 		DBName:         getenv("DB_NAME", "stockflow"),
 		DBSSLMode:      getenv("DB_SSLMODE", "disable"),
-		FrontendOrigin: getenv("FRONTEND_ORIGIN", "http://localhost:5173"),
+		FrontendOrigin: getenv("FRONTEND_ORIGIN", "http://localhost:5175"),
 	}
 
 	if err := c.validate(); err != nil {
