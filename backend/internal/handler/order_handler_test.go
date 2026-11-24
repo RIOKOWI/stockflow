@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"sync"
 	"testing"
@@ -261,6 +262,165 @@ func TestGetOrder_Success(t *testing.T) {
 	}
 	if item["unit_price"].(float64) != 120000 || item["subtotal"].(float64) != 360000 {
 		t.Errorf("unexpected item prices: %v", item)
+	}
+}
+
+func TestListOrders_Success(t *testing.T) {
+	if os.Getenv("INTEGRATION") == "" {
+		t.Skip("set INTEGRATION=1 to run integration tests")
+	}
+	e := setupTestEnv(t)
+	createOrderProduct(t, e, "TEST-ORD-LIST", "List Widget", 120000, 10)
+
+	rr := e.post(t, "/api/orders", map[string]any{
+		"customer": "TEST List Customer",
+		"items":    []map[string]any{{"sku": "TEST-ORD-LIST", "qty": 2}},
+	})
+	assertStatus(t, rr, http.StatusCreated)
+
+	rrList := e.get(t, "/api/orders?search=TEST%20List%20Customer")
+	assertStatus(t, rrList, http.StatusOK)
+	body := decodeJSON(t, rrList)
+
+	orders := body["data"].([]any)
+	if len(orders) != 1 {
+		t.Fatalf("expected 1 order, got %d", len(orders))
+	}
+	order := orders[0].(map[string]any)
+	if order["customer"] != "TEST List Customer" {
+		t.Errorf("unexpected customer: %v", order["customer"])
+	}
+	if order["status"] != "CREATED" {
+		t.Errorf("unexpected status: %v", order["status"])
+	}
+	if order["total"].(float64) != 240000 {
+		t.Errorf("expected total=240000, got %v", order["total"])
+	}
+	if _, ok := order["items"]; ok {
+		t.Error("expected the list rows to omit the order items")
+	}
+
+	meta := body["meta"].(map[string]any)
+	if meta["total"].(float64) != 1 {
+		t.Errorf("expected total=1, got %v", meta["total"])
+	}
+	if meta["page"].(float64) != 1 {
+		t.Errorf("expected page=1, got %v", meta["page"])
+	}
+	if meta["limit"].(float64) != 10 {
+		t.Errorf("expected limit=10, got %v", meta["limit"])
+	}
+	if meta["total_pages"].(float64) != 1 {
+		t.Errorf("expected total_pages=1, got %v", meta["total_pages"])
+	}
+}
+
+func TestListOrders_Pagination(t *testing.T) {
+	if os.Getenv("INTEGRATION") == "" {
+		t.Skip("set INTEGRATION=1 to run integration tests")
+	}
+	e := setupTestEnv(t)
+	createOrderProduct(t, e, "TEST-ORD-PAGE", "Page Widget", 120000, 10)
+
+	for i := 0; i < 2; i++ {
+		rr := e.post(t, "/api/orders", map[string]any{
+			"customer": "TEST Page Customer",
+			"items":    []map[string]any{{"sku": "TEST-ORD-PAGE", "qty": 1}},
+		})
+		assertStatus(t, rr, http.StatusCreated)
+	}
+
+	rrFirst := e.get(t, "/api/orders?search=TEST%20Page%20Customer&limit=1&page=1")
+	assertStatus(t, rrFirst, http.StatusOK)
+	first := decodeJSON(t, rrFirst)
+	if len(first["data"].([]any)) != 1 {
+		t.Fatalf("expected 1 order on the first page, got %d", len(first["data"].([]any)))
+	}
+	if first["meta"].(map[string]any)["total"].(float64) != 2 {
+		t.Errorf("expected total=2, got %v", first["meta"].(map[string]any)["total"])
+	}
+	if first["meta"].(map[string]any)["total_pages"].(float64) != 2 {
+		t.Errorf("expected total_pages=2, got %v", first["meta"].(map[string]any)["total_pages"])
+	}
+
+	rrSecond := e.get(t, "/api/orders?search=TEST%20Page%20Customer&limit=1&page=2")
+	assertStatus(t, rrSecond, http.StatusOK)
+	second := decodeJSON(t, rrSecond)
+	if len(second["data"].([]any)) != 1 {
+		t.Fatalf("expected 1 order on the second page, got %d", len(second["data"].([]any)))
+	}
+
+	firstID := first["data"].([]any)[0].(map[string]any)["id"]
+	secondID := second["data"].([]any)[0].(map[string]any)["id"]
+	if firstID == secondID {
+		t.Errorf("expected different orders on each page, got %v twice", firstID)
+	}
+}
+
+func TestListOrders_Empty(t *testing.T) {
+	if os.Getenv("INTEGRATION") == "" {
+		t.Skip("set INTEGRATION=1 to run integration tests")
+	}
+	e := setupTestEnv(t)
+
+	rr := e.get(t, "/api/orders?search=NO-SUCH-CUSTOMER-12345")
+	assertStatus(t, rr, http.StatusOK)
+	body := decodeJSON(t, rr)
+
+	orders := body["data"].([]any)
+	if orders == nil {
+		t.Fatal("expected an empty array, got null")
+	}
+	if len(orders) != 0 {
+		t.Errorf("expected 0 orders, got %d", len(orders))
+	}
+	if body["meta"].(map[string]any)["total"].(float64) != 0 {
+		t.Errorf("expected total=0, got %v", body["meta"].(map[string]any)["total"])
+	}
+}
+
+func TestListOrders_InvalidParameters(t *testing.T) {
+	if os.Getenv("INTEGRATION") == "" {
+		t.Skip("set INTEGRATION=1 to run integration tests")
+	}
+	e := setupTestEnv(t)
+
+	paths := []string{
+		"/api/orders?page=0",
+		"/api/orders?page=abc",
+		"/api/orders?limit=0",
+		"/api/orders?limit=101",
+		"/api/orders?sort_by=bogus",
+		"/api/orders?sort_order=sideways",
+	}
+	for _, path := range paths {
+		t.Run(path, func(t *testing.T) {
+			rr := e.get(t, path)
+			assertStatus(t, rr, http.StatusBadRequest)
+			errObj := decodeJSON(t, rr)["error"].(map[string]any)
+			if errObj["code"] != "VALIDATION_ERROR" {
+				t.Errorf("expected VALIDATION_ERROR, got %v", errObj["code"])
+			}
+		})
+	}
+}
+
+func TestListOrders_DatabaseError(t *testing.T) {
+	if os.Getenv("INTEGRATION") == "" {
+		t.Skip("set INTEGRATION=1 to run integration tests")
+	}
+	e := setupTestEnv(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	req := httptest.NewRequest(http.MethodGet, "/api/orders", nil).WithContext(ctx)
+	rr := httptest.NewRecorder()
+	e.router.ServeHTTP(rr, req)
+
+	assertStatus(t, rr, http.StatusInternalServerError)
+	errObj := decodeJSON(t, rr)["error"].(map[string]any)
+	if errObj["code"] != "INTERNAL_SERVER_ERROR" {
+		t.Errorf("expected INTERNAL_SERVER_ERROR, got %v", errObj["code"])
 	}
 }
 
