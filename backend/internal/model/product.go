@@ -30,6 +30,8 @@ type ProductFilter struct {
 	Search    string
 	MinPrice  *int
 	MaxPrice  *int
+	IsActive  *bool
+	MaxStock  *int
 	SortBy    string
 	SortOrder string
 	Page      int
