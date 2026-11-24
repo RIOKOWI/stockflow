@@ -100,7 +100,7 @@ describe("OrderForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create order" }));
 
     expect(await screen.findByText("Customer is required")).toBeTruthy();
-    expect(screen.getByText("Add at least one item")).toBeTruthy();
+    expect(screen.getByText("Quantity is required")).toBeTruthy();
     expect(mockedCreateOrder).not.toHaveBeenCalled();
   });
 
