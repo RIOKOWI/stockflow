@@ -15,15 +15,13 @@ export default function CancelOrderDialog({
   onClose,
   onCancelled,
 }: CancelOrderDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (dialog && !dialog.open && typeof dialog.showModal === "function") {
-      dialog.showModal();
-    }
+    if (dialog && !dialog.open) dialog.showModal();
   }, []);
 
   const handleCancel = () => {
