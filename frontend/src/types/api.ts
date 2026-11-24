@@ -49,3 +49,37 @@ export interface ApiErrorBody {
     sku?: string;
   };
 }
+
+export type StockMovementType = "in" | "out";
+
+export interface StockMovement {
+  id: number;
+  product_id: number;
+  type: StockMovementType;
+  qty: number;
+  note: string | null;
+  created_at: string;
+}
+
+export interface StockAdjustmentRequest {
+  type: StockMovementType;
+  qty: number;
+  note?: string | null;
+}
+
+export interface StockAdjustmentResult {
+  stock: number;
+  movement: StockMovement;
+}
+
+export interface StockAdjustmentResponse {
+  success: boolean;
+  message: string;
+  data: StockAdjustmentResult;
+}
+
+export interface StockMovementsResponse {
+  success: boolean;
+  message: string;
+  data: StockMovement[];
+}
