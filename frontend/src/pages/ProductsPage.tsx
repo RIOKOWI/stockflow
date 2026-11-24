@@ -6,6 +6,7 @@ import ProductDetailModal from "../components/products/ProductDetailModal";
 import ProductFormModal from "../components/products/ProductFormModal";
 import ProductTable from "../components/products/ProductTable";
 import StockAdjustmentModal from "../components/products/StockAdjustmentModal";
+import { useDebounce } from "../hooks/useDebounce";
 import type { Product, ProductMeta } from "../types/api";
 
 const LIMIT = 10;
@@ -25,13 +26,31 @@ export default function ProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [stockTargetId, setStockTargetId] = useState<number | null>(null);
   const [stockVersion, setStockVersion] = useState(0);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
+  const searching = search !== debouncedSearch;
+  type FilterKey = "all" | "active" | "inactive" | "low_stock";
+  const [filter, setFilter] = useState<FilterKey>("all");
+
+  function filterParams(key: FilterKey) {
+    if (key === "active") return { is_active: true };
+    if (key === "inactive") return { is_active: false };
+    if (key === "low_stock") return { max_stock: 10 };
+    return {};
+  }
 
   useEffect(() => {
-    let active = true;
-    getProducts(page, LIMIT).then(
+    const controller = new AbortController();
+
+    getProducts(
+      page,
+      LIMIT,
+      debouncedSearch || undefined,
+      controller.signal,
+      filterParams(filter),
+    ).then(
       (response) => {
-        if (!active) return;
-        // The last page can disappear after a delete, so fall back to it.
+        if (controller.signal.aborted) return;
         if (page > response.meta.total_pages) {
           setPage(response.meta.total_pages);
           return;
@@ -41,15 +60,15 @@ export default function ProductsPage() {
         setLoading(false);
       },
       (err: unknown) => {
-        if (!active) return;
+        if (controller.signal.aborted) return;
         setError(getErrorMessage(err));
         setLoading(false);
       },
     );
-    return () => {
-      active = false;
-    };
-  }, [reload, page]);
+
+    
+    return () => controller.abort();
+  }, [reload, page, debouncedSearch, filter]);
 
   const retry = () => {
     setError(null);
@@ -110,6 +129,24 @@ export default function ProductsPage() {
       </header>
 
       <div className="products-toolbar">
+        <input
+          id="product-search"
+          className="search-input"
+          type="search"
+          aria-label="Search products"
+          placeholder="Search products..."
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(1);
+            setError(null);
+          }}
+        />
+        {searching && (
+          <span className="search-status" role="status">
+            Searching…
+          </span>
+        )}
         <button
           type="button"
           className="button"
@@ -136,8 +173,35 @@ export default function ProductsPage() {
         </div>
       )}
 
+      <div className="filter-tabs" role="group" aria-label="Filter products">
+        {(
+          [
+            { key: "all", label: "All" },
+            { key: "active", label: "Active" },
+            { key: "inactive", label: "Inactive" },
+            { key: "low_stock", label: "Low Stock" },
+          ] as { key: FilterKey; label: string }[]
+        ).map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            className={`filter-tab${filter === key ? " filter-tab-active" : ""}`}
+            aria-pressed={filter === key}
+            onClick={() => { setFilter(key); setPage(1); }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {!loading && !error && products.length === 0 && (
-        <p className="state">No products found.</p>
+        <p className="state">
+          {debouncedSearch
+            ? `No products match "${debouncedSearch}".`
+            : filter !== "all"
+              ? "No products match the current filter."
+              : "No products found."}
+        </p>
       )}
 
       {!loading && !error && products.length > 0 && (
