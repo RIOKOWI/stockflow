@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Connect opens a pgx connection pool and verifies it can reach PostgreSQL.
 func Connect(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
 	poolCfg, err := pgxpool.ParseConfig(cfg.DSN())
 	if err != nil {
