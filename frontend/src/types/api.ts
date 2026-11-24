@@ -23,6 +23,24 @@ export interface ProductsResponse {
   meta: ProductMeta;
 }
 
+export interface ProductResponse {
+  success: boolean;
+  message: string;
+  data: Product;
+}
+
+export interface CreateProductRequest {
+  sku: string;
+  name: string;
+  price: number;
+}
+
+export interface UpdateProductRequest {
+  sku: string;
+  name: string;
+  price: number;
+}
+
 export interface ApiErrorBody {
   error: {
     code: string;
