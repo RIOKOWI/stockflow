@@ -56,12 +56,12 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	sortBy := q.Get("sort_by")
 	if sortBy == "" {
-		sortBy = "created_at"
+		sortBy = "id"
 	}
 
 	sortOrder := strings.ToLower(q.Get("sort_order"))
 	if sortOrder == "" {
-		sortOrder = "desc"
+		sortOrder = "asc"
 	}
 
 	filter := model.ProductFilter{
