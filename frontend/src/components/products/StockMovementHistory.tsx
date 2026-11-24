@@ -74,7 +74,7 @@ export default function StockMovementHistory({
                   </span>
                 </td>
                 <td className="numeric">{movement.qty}</td>
-                <td>{movement.note ?? "—"}</td>
+                <td>{movement.note ?? "-"}</td>
               </tr>
             ))}
           </tbody>
