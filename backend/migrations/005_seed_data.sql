@@ -1,19 +1,20 @@
 -- +goose Up
 WITH seeded AS (
-    INSERT INTO products (sku, name, price, stock)
+    INSERT INTO products (sku, name, price, stock, is_active)
     VALUES
-        ('SKU-001', 'iCrystal',           1500000,  50),
-        ('SKU-002', 'iGalaxy',            1850000,  30),
-        ('SKU-003', 'iMasonry',           1650000,  15),
-        ('SKU-004', 'iZen',               1750000,  40),
-        ('SKU-005', 'Notte Stelle',       2200000,  25),
-        ('SKU-006', 'iWood',              1950000,  12),
-        ('SKU-007', 'Milky Latte',        1600000,  18),
-        ('SKU-008', 'Mocha Cioccolatta',  1800000,  20),
-        ('SKU-009', 'Sedimen Tario',     1700000,  22),
-        ('SKU-010', 'Vulcan Ash',         1550000,   8),
-        ('SKU-011', 'Pompeii Grigio',     1900000,  10),
-        ('SKU-012', 'Portoro Nero',       2500000,  60)
+        ('SKU-001', 'iCrystal',           1500000, 50, TRUE),
+        ('SKU-002', 'iGalaxy',            1850000, 30, TRUE),
+        ('SKU-003', 'iMasonry',            1650000, 15, TRUE),
+        ('SKU-004', 'iZen',                1750000, 40, TRUE),
+        ('SKU-005', 'Notte Stelle',        2200000, 25, TRUE),
+        ('SKU-006', 'iWood',               1950000, 12, TRUE),
+        ('SKU-007', 'Milky Latte',          1600000, 18, TRUE),
+        ('SKU-008', 'Mocha Cioccolatta',   1800000, 20, TRUE),
+        ('SKU-009', 'Sedimen Tario',       1700000, 22, TRUE),
+        ('SKU-010', 'Vulcan Ash',          1550000,  8, TRUE),
+        ('SKU-011', 'Pompeii Grigio',      1900000, 10, TRUE),
+        ('SKU-012', 'Portoro Nero',        2500000, 60, TRUE),
+        ('SKU-013', 'Sugar Zucchero',        2700000, 60, FALSE)
     ON CONFLICT (sku) DO NOTHING
     RETURNING id, stock
 )
