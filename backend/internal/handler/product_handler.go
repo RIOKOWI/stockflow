@@ -88,6 +88,27 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		}
 		filter.MaxPrice = &n
 	}
+	if v := q.Get("is_active"); v != "" {
+		switch v {
+		case "true":
+			t := true
+			filter.IsActive = &t
+		case "false":
+			f := false
+			filter.IsActive = &f
+		default:
+			writeError(w, &service.Error{Code: service.CodeValidation, Message: "is_active must be true or false"})
+			return
+		}
+	}
+	if v := q.Get("max_stock"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 0 {
+			writeError(w, &service.Error{Code: service.CodeValidation, Message: "max_stock must be a non-negative integer"})
+			return
+		}
+		filter.MaxStock = &n
+	}
 
 	result, err := h.svc.List(r.Context(), filter)
 	if err != nil {
