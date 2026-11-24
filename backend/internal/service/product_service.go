@@ -44,6 +44,7 @@ func NewProductService(repo *repository.ProductRepository) *ProductService {
 }
 
 var sortColumns = map[string]bool{
+	"id":         true,
 	"name":       true,
 	"price":      true,
 	"stock":      true,
@@ -79,7 +80,7 @@ func (s *ProductService) List(ctx context.Context, filter model.ProductFilter) (
 		return model.ProductList{}, validationError("limit must be between 1 and 100")
 	}
 	if !sortColumns[filter.SortBy] {
-		return model.ProductList{}, validationError("sort must be one of name, price, stock, created_at")
+		return model.ProductList{}, validationError("sort must be one of id, name, price, stock, created_at")
 	}
 	if filter.SortOrder != "asc" && filter.SortOrder != "desc" {
 		return model.ProductList{}, validationError("order must be asc or desc")
